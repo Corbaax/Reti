@@ -273,8 +273,23 @@ Questo permette al mittente di reinviare solamente i segmenti mancanti.
 ### Sliding Window Protocol
 In TCP lo sliding window protocol è uno strumento utilizzato per gestire il flusso e l'affidabilità della connesione tra due Host. In Particolare si vuole evitare che un mittente veloce sovraccarichi un ricevitore lento.
 Il protocollo prevede che il ricevitore annunci la sua **"Finestra di ricezione"** tramite il campo **Window Size** presente nell'header TCP. Questo valore rappresenta la quantità di Byte disponibili nel buffer, di conseguenza il mittente potrà inviare una quantità di Byte non superiore alla dimensione della finestra.
+#### Dimensionamento della Finestra di Congestione 
+Il suo dimensionamento non è fisso, ma **dinamico** e si basa su un algoritmo che reagisce allo stato percepito della rete. L'obiettivo è trovare il rate di trasmissione massimo possibile senza sovraccaricare la rete.
+- **Slow Start:** Inizialmente la finestra è impostata ad un valore molto piccolo (solitamente a 1 Maximum Segment Size). Ad ogni **ACK ricevuto** la dimensione viene raddoppiata.  La finestra cresce esponenzialmente fino a **una soglia** chiamata ssthresh (slow start threshold) o finché non avviene una **perdita di pacchetti**. Una volta raggiunta la soglia inizia la seconda fase. 
+- **Congestion Avoidance**: in questa fase la finestra crescerà in modo lineare aumentando di 1 MSS per ogni ACK.
+In caso di perdita di pacchetti la connessione considera la rete come congestionata e reagirà in modo differente in base all'evento:
+1) **Time Out** (*perdita grave*):
+   la ssthresh viene impostata come la metà della finestra corrente. si resetta la finestra e si riparte con la fase di *slow start*
+2) **3 ACK duplicati** (*Fast Recovery*):
+   La ssthresh viene impostata come la metà della finestra corrente e la finestra viene dimezzata. dopo di che riparte la fase di **congestion avoidance** considerando subito i 3 ACK che hanno causato il fast recovery.
 
-
+```mermaid
+xychart-beta
+    title "Esempio di Dimensionamento della Congestion Window (cwnd)"
+    x-axis "Tempo (RTT)" [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    y-axis "Dimensione cwnd (MSS)" 0 --> 20
+    line [1, 2, 4, 8, 16, 17, 18, 19, 10, 11, 12, 13, 14, 15, 16]
+```
 # Protocollo di livello Applicazione
 >In questo livello le **"unità"** trasmessa viene chiamate **"dati"**, **"payload"** o **"messaggi"**.
 >I dati non hanno un formato definito, possono essere testuali cosi come binari.
