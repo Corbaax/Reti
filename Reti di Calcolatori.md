@@ -189,6 +189,50 @@ IPv6 è il successore di IPv4, progettato per risolverne le principali limitazio
 Una delle innovazioni più potenti di IPv6 è il sistema modulare degli **header di estensione**. Invece di avere un header singolo e monolitico con opzioni (come in IPv4), IPv6 utilizza una catena di header specializzati che vengono inseriti tra l'header di base e il payload.
 Il **Next Header** funziona come un descrittore del prossimo header in catena. L'ultimo nodo è sempre un descrittore del protocollo di livello trasporto.
 
+## Routing
+Il suo scopo principale è l'**instradamento (routing)** dei pacchetti attraverso reti multiple, dalla sorgente alla destinazione, utilizzando un sistema di **indirizzamento logico** (*Protocolli IPvx*).
+I protocolli di Routing si differenziano in due grandi categorie:
+- Protocolli a Distance Vector (*come RIP*)
+- Protocolli a Link State (*come OSPF*)
+### Distance-Vector
+L'idea principale dei protocolli Distance-Vector è quello di farsi informare dai router adiacenti quali reti conoscono (e a che distanza) e in base a quello determinare quali reti sono raggiungibili.
+La loro semplicità li rende adatti per **piccole reti omogenee e stabili**.
+Il funzionamento è relativamente semplice:
+- I router comunicano periodicamente con i router collegati direttamente la propria routing table.
+- Alla ricezione di una nuova tabella i router aggiornano la propria con la logica di modificare solo se è presente un collegamento migliore.
+I Distance vector presentano il rischio di **loop di routing**.
+> es. R1 pensa che la via per una rete sia R2, e R2 pensa che la via sia R1
+
+per evitare il problema esistono diverse tecniche:
+- **Split Horizon**: Dalla tabella di routing vengono rimosse le rotte che passerebbero dal collegamento su cui viene mandata.
+- **Poison Reverse**: Quando viene registrata una rotta viene annunciata sul collegamento come "_infinita_", in questo modo l'arco di collegamento diventa unidirezionale.
+- **Holddown Timers**: Quando una rotta viene annunciata come irraggiungibile viene avviato un timer nel quale ogni tipo di aggiornamento della rotta per quella rete viene ignorato; unica eccezione se la rotta originale torna ad essere valida.
+#### RIP: Routing Internet Protocol
+Il RIP è uno dei più antichi protocolli di routing dinamico, classificato come **Distance-Vector**.
+Il protocollo usa come metrica gli _Hop_ ovvero il numero di router attraversati, con un massimo di 15 router.
+Il valore **16** assume il valore di "_Irraggiungibile_" o "_Infinito_".
+Rip è un protocollo estremamente limitato il cui uso è limitato a reti di piccole dimensioni, inoltre gli aggiornamenti periodici e i timer di holddown rendono molto lenta la risposta ai cambiamenti nella rete e la trasmissione periodica dell'intera tabella rallenta canale generando traffico spesso inutile.
+### Link-State
+I protocolli **Link-State** rappresentano l'evoluzione moderna e più sofisticata rispetto ai protocolli Distance-Vector. Ogni router costruisce una **mappa topologica completa e identica** della rete e applica un **algoritmo matematico** (Dijkstra) per calcolare il percorso più breve verso tutte le destinazioni.
+Il meccanismo fondamentale dei Link-State è il **Flooding** che consiste nel generare un un pacchetto speciale chiamato **LSA** contenente i suoi *collegamenti diretti*. 
+Ogni router nella rete inoltra i pacchetti _LSA_ che riceve a tutte le interfacce a cui è collegato (tranne quella di origine), così facendo l'informazione viene propagata e condivisa con tutta la rete.
+> Viene creata una vera e propria rappresentazione del grafo di rete come Database di Archi.
+> Il DB creato è identico in tutti i router in quanto la propagazione avviene uniformente.
+
+La rotta nel grafo viene tracciata attraverso **l'algoritmo di Dijkstra**
+#### OSPF
+**SPF (Open Shortest Path First)** è il protocollo di routing **Link-State** più diffuso e importante per le reti.
+È uno standard **aperto** (definito nell'RFC 2328) che supera tutte le limitazioni dei protocolli Distance-Vector.
+Il protocollo prevede la creazione di una mappa topologica della rete tramite 3 Database:
+- Tabella dei Vicini: Contiene tutti i router OSPF connessi direttamente
+- Link-State DB: Rappresenta la mappa completa della rete
+- Tabella di routing: memorizza i risultati dell'algoritmo di Dijkstra (_memorizzato per evitare il ricalcolo e velocizzare il routing_)
+- 
+La caratteristica più potente di OSPF è la sua **capacità di suddividere** una grande rete in **aree** per ridurre il overhead computazionale e di traffico. Questa qualità è particolamente utile per evitare un flooding eccessivo nella rete.
+- **Area 0 (Backbone Area):** **Obbligatoria.** Tutte le altre aree devono connettersi direttamente all'Area 0. Il suo compito è instradare il traffico _tra_ le diverse aree.
+- **Aree Non-Backbone (Area 1, Area 2, ...):** Aree periferiche. Contengono router i cui database devono solo conoscere la topologia della loro area, non di tutta la rete.
+- **ABR (Area Border Router):** Un router che ha interfacce in almeno due aree diverse (es. Area 0 e Area 1). Si occupa di iniettare rotte riassuntive tra un'area e l'altra.
+- **ASBR (Autonomous System Boundary Router):** Un router che ridistribuisce rotte provenienti da un protocollo di routing esterno (es. EIGRP, BGP) all'interno di OSPF.
 # Protocollo di livello Trasporto (4°)
 > Nel livello di trasporto le "unità" trasmesse sono chiamate **Segmenti**
 > Questo livello si occupa delle connessioni End-to-End e dell'affidabilità.
