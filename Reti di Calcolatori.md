@@ -11,6 +11,21 @@ Semplificando  i ruoli dei due *sotto-livelli* possiamo definire che il **MAC** 
 ## Media Access Control (MAC)
 Il sottolivello **MAC (Media Access Control)** è il gestore dell'accesso al mezzo fisico. La sua funzione primaria è regolare _come_ e _quando_ un dispositivo può trasmettere su un mezzo condiviso. 
 Inoltre, il MAC definisce l'indirizzamento fisico univoco tramite gli **indirizzi MAC** (Media Access Control address) e si occupa dell'incapsulamento dei dati in frame, aggiungendo un header con gli indirizzi di sorgente e destinazione e un trailer con un checksum (FCS) per la rilevazione degli errori di trasmissione.
+### CSMA/CD
+**CSMA/CD (Carrier Sense Multiple Access with Collision Detection)** è un protocollo di accesso al mezzo per reti half-duplex con topologia a bus. Il suo funzionamento si articola in tre fasi principali: Accesso al Mezzo, Rilevamento della Collisione e Gestione della Collisione.
+Si divide in 3 punti fondamentali
+#### CSMA (Carrier Sense & Multiple Access)
+Prima della trasmissione, una stazione deve determinare se il mezzo è libero.
+Se il mezzo risulta libero dovrò attendere un tempo arbitrario detto **Interframe Gap** (_IFG_) prima di iniziare la mia trasmissione, se durante questo intervallo il canale viene occupato da un'altra stazione, dovrò aspettare il termine della trasmissione e riattendere _IFG_.
+#### CD
+Durante la trasmissione la stazione monitora il canale per rilevare collisioni, per at confronta il dato scritto con il dato letto, se non corrispondono allora si è verificata una collisione.
+Allo scopo di poter **sempre** verificare la collisione la trasmissione deve durare abbastanza a lungo da permettere al segnale di propagarsi per tutto il canale. Questo tempo è definito come **Slut Time**.
+Dimensione minima del frame $L_{min} = BitRate * T_{slot}$
+Per rispettare la dimensione il trasmettitore dovrà riempire il frame con padding fino alla lunghezza minima
+#### Gestione Collisione
+Una volta rilevata la collisione la stazione interrompe la trasmissione e invia un segnale di **JAM** per informare la rete della collisione.
+Subito dopo viene avviato un timer di attesa casuale  calcolato come $T_w = k * T_{slot}$ dove k è un valore casuale compreso nel intervallo $[0,2^{min(n_{tentativi},10)}-1]$.
+Se dopo _16_ tentativi la trasmissione non riesce, il frame viene scartato e viene segnalato l'errore ai livelli superiori della pila ("_Collision TimeOut_")
 
 ## Logical Link Control (LLC)
 Il sottolivello **LLC (Logical Link Control)**, invece, opera a un livello di astrazione superiore, fornendo servizi di controllo indipendentemente dalla specifica tecnologia di rete fisica sottostante. La sua funzione cruciale è il **_multiplexing_** dei protocolli di livello superiore: tramite i campi **LSAP (Link Service Access Point)** nel suo header, identifica se il payload del frame deve essere consegnato a IP, ARP o un altro protocollo, permettendo a tutti di convivere sulla stessa scheda di rete. Fornisce inoltre servizi opzionali di controllo del flusso e recupero dagli errori (ad esempio, tramite ritrasmissione nelle sue modalità orientate alla connessione), sebbene nella pratica moderna questi ultimi siano spesso delegati a protocolli di livello superiore come TCP.
