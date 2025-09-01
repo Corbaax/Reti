@@ -205,9 +205,10 @@ Una delle innovazioni più potenti di IPv6 è il sistema modulare degli **header
 Il **Next Header** funziona come un descrittore del prossimo header in catena. L'ultimo nodo è sempre un descrittore del protocollo di livello trasporto.
 
 ## Routing
-Il suo scopo principale è l'**instradamento (routing)** dei pacchetti attraverso reti multiple, dalla sorgente alla destinazione, utilizzando un sistema di **indirizzamento logico** (*Protocolli IPvx*).
+Il **routing** è il processo di **determinazione dei percorsi** ottimali che i pacchetti dovrebbero seguire per viaggiare dalla sorgente alla destinazione attraverso la rete. L'operazione di inviare un pacchetto utilizzando una rotta già calcolata è detta **forwarding**
+Il suo scopo principale è l'**instradamento  (routing)** dei pacchetti attraverso reti multiple, dalla sorgente alla destinazione, utilizzando un sistema di **indirizzamento logico** (*Protocolli IPvx*).
 I protocolli di Routing si differenziano in due grandi categorie:
-- Protocolli a Distance Vector (*come RIP*)
+- Protocolli a Distance Vectorro (*come RIP*)
 - Protocolli a Link State (*come OSPF*)
 ### Distance-Vector
 L'idea principale dei protocolli Distance-Vector è quello di farsi informare dai router adiacenti quali reti conoscono (e a che distanza) e in base a quello determinare quali reti sono raggiungibili.
@@ -349,6 +350,23 @@ xychart-beta
     y-axis "Dimensione cwnd (MSS)" 0 --> 20
     line [1, 2, 4, 8, 16, 17, 18, 19, 10, 11, 12, 13, 14, 15, 16]
 ```
+### Tecniche di controllo di Flusso
+Durante una connessione è possibile avere una situazione nella quale si ha un mittente lento e un destinatario veloce. In queste situazioni sorge un problema poiché ila mittente si trova con pochi dati da inviare, inviando tanti piccoli pacchetti (a cui si accoda un ACK in ritorno).
+Questo crea un grandi sbilanciamento nel rapporto tra Informazioni e Header.
+Per gestire questa problematica sono presenti alcuni meccanismi:
+#### Delayed ACK
+invece di inviare un ACK immediatamente per ogni segmento ricevuto, il stack TCP del destinatario (il consumatore veloce) attende brevemente (fino a **200 ms**) nella speranza che succeda una di queste due cose:
+1) Arrivi un secondo segmento da acknowledgedare. In questo caso, l'ACK confermerà **entrambi i segmenti** con un unico pacchetto.
+2) L'applicazione (del destinatario) elabori una risposta da inviare al mittente. In questo caso, l'ACK può essere **"piggybacked"** (portato di passaggio) sullo stesso pacchetto di dati, eliminando completamente il bisogno di un pacchetto separato.
+#### Nagle's Algorithm
+risolve il problema introducendo un semplice meccanismo di **buffering e consolidamento** sul mittente.
+Evita quindi di inviare segmenti piccoli
+> Un segmento è considerato "piccolo" se la sua dimensione è inferiore all'**MSS (Maximum Segment Size)**.
+
+L'algoritmo controlla due variabili prima di ogni tentativo di invio:
+1. La quantità di dati **non ancora confermati** dal destinatario.
+2. La dimensione del potenziale nuovo segmento che l'applicazione sta cercando di inviare.
+Se non ci sono dati non confermati, allora il segmento può essere inviato nell'immediato altrimenti viene controllata la dimensione del nuovo segmento e, se non è considerabile piccolo allora può essere inviato, altrimenti dovrà attendere la conferma die dati o che il segmento raggiunga la dimensione minima.
 # Protocollo di livello Applicazione
 >In questo livello le **"unità"** trasmessa viene chiamate **"dati"**, **"payload"** o **"messaggi"**.
 >I dati non hanno un formato definito, possono essere testuali cosi come binari.
